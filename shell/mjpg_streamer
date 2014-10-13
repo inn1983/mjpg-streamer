@@ -1,0 +1,61 @@
+#!/bin/bash
+# /etc/init.d/mjpg_streamer
+### BEGIN INIT INFO
+# Provides:          mjpg_streamer
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: mjpg_streamer for webcam
+# Description:       Streams /dev/video0 to http://IP/?action=stream
+### END INIT INFO
+
+f_message(){
+        echo "[+] $1"
+        #echo "space here"
+}
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+        start)
+                f_message "Starting mjpg_streamer"
+                /usr/local/bin/mjpg_streamer -b -i "/usr/local/lib/input_uvc.so -d /dev/video0 -f 3" -o "/usr/local/lib/output_http.so -w /usr/local/www"
+                sleep 2
+                f_message "mjpg_streamer started"
+                ;;
+        stop)
+                f_message "Stopping mjpg_streamer."
+                pid=`ps aux | grep [m]jpg_streamer|awk '{print $2}'`
+                if [[ $pid != "" ]]; then
+                        kill -9 $pid
+                fi
+                f_message "mjpg_streamer stopped"
+                ;;
+        restart)
+                f_message "Restarting mjpg_streamer"
+                pid=`ps aux | grep [m]jpg_streamer|awk '{print $2}'`
+                if [[ $pid != "" ]]; then
+                        kill -9 $pid
+                fi
+                /usr/local/bin/mjpg_streamer -b -i "/usr/local/lib/input_uvc.so -d /dev/video0 -f 3" -o "/usr/local/lib/output_http.so -w /usr/local/www"
+                sleep 2
+                f_message "Restarted mjpg_streamer"
+                ;;
+        status)
+                pid=`ps aux | grep [m]jpg_streamer|awk '{print $2}'`
+                if [ -n "$pid" ];
+                then
+                        f_message "mjpg_streamer is running with pid ${pid}"
+                        f_message "mjpg_streamer was started with the following command line"
+                        cat /proc/${pid}/cmdline ; echo ""
+                else
+                        f_message "Could not find mjpg_streamer running"
+                fi
+                ;;
+        *)
+                f_message "Usage: $0 {start|stop|status|restart}"
+                exit 1
+                ;;
+esac
+exit 0
+
